@@ -1,23 +1,20 @@
+
+const API_URL = 'http://localhost:3000';
+
 // Data storage
-let data = [];
-let services = [];
+let barbers = []; // Será carregado do backend
+let services = []; // Será carregado do backend
+let data = []; // Para armazenar os registros temporários
 
 // Utility function to calculate commission
 function calculateCommission(amount) {
     return parseFloat((amount * 0.05).toFixed(2));
 }
 
-// Lista de Barbeiros
-let barbers = [
-    { id: 1, name: "Thiago" },
-    { id: 2, name: "Fernando" },
-    { id: 3, name: "Diego" }
-];
-
 // Atualizar dropdown de barbeiros
 function updateBarberList() {
     const barberDropdown = document.getElementById('barberName');
-    barberDropdown.innerHTML = '<option value="">Selecione o Barbeiro</option>'; // Reset options
+    barberDropdown.innerHTML = '<option value="">Selecione o Barbeiro</option>';
 
     barbers.forEach(barber => {
         const option = document.createElement('option');
@@ -30,7 +27,7 @@ function updateBarberList() {
 // Atualizar lista de barbeiros no relatório
 function updateBarberReportList() {
     const reportBarberDropdown = document.getElementById('reportBarber');
-    reportBarberDropdown.innerHTML = '<option value="">Selecione o Barbeiro</option>'; // Reset options
+    reportBarberDropdown.innerHTML = '<option value="">Selecione o Barbeiro</option>';
 
     barbers.forEach(barber => {
         const option = document.createElement('option');
@@ -38,6 +35,36 @@ function updateBarberReportList() {
         option.textContent = barber.name;
         reportBarberDropdown.appendChild(option);
     });
+}
+
+// Obter Lista de Barbeiros do Servidor
+async function fetchBarbers() {
+    try {
+        const response = await fetch(`${API_URL}/barbeiros`);
+        const barbersFromServer = await response.json();
+        barbers = barbersFromServer;
+        updateBarberList();
+        updateBarberReportList();
+    } catch (error) {
+        console.error('Erro ao obter barbeiros:', error);
+        alert('Não foi possível carregar a lista de barbeiros.');
+    }
+}
+
+// Adicionar Barbeiro ao Servidor
+async function addBarber(name) {
+    try {
+        const response = await fetch(`${API_URL}/barbeiros`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome: name }),
+        });
+        if (!response.ok) throw new Error('Erro ao adicionar barbeiro');
+        await fetchBarbers();
+    } catch (error) {
+        console.error('Erro ao adicionar barbeiro:', error);
+        alert('Não foi possível adicionar o barbeiro.');
+    }
 }
 
 // Adicionar novo registro
@@ -68,23 +95,19 @@ function addRecord() {
 }
 
 // Adicionar novo serviço
-function addService() {
-    const serviceName = document.getElementById('serviceName').value;
-    const servicePrice = parseFloat(document.getElementById('servicePrice').value) || 0;
-
-    if (!serviceName || servicePrice <= 0) {
-        alert('Por favor, preencha todos os campos de serviço corretamente.');
-        return;
+async function addServiceToServer(barberId, description, value) {
+    try {
+        const response = await fetch(`${API_URL}/servicos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ barbeiro_id: barberId, descricao: description, valor: value }),
+        });
+        if (!response.ok) throw new Error('Erro ao adicionar serviço');
+        await fetchServices();
+    } catch (error) {
+        console.error('Erro ao adicionar serviço:', error);
+        alert('Não foi possível adicionar o serviço.');
     }
-
-    if (services.some(service => service.serviceName === serviceName)) {
-        alert('Serviço já cadastrado.');
-        return;
-    }
-
-    services.push({ serviceName, servicePrice });
-    updateServiceList();
-    clearServiceInputs();
 }
 
 // Atualizar dropdown de serviços
@@ -98,6 +121,22 @@ function updateServiceList() {
         option.textContent = `${service.serviceName} - R$${service.servicePrice.toFixed(2)}`;
         serviceDropdown.appendChild(option);
     });
+}
+
+// Obter Lista de Serviços do Servidor
+async function fetchServices() {
+    try {
+        const response = await fetch(`${API_URL}/servicos`);
+        const servicesFromServer = await response.json();
+        services = servicesFromServer.map(service => ({
+            serviceName: service.descricao,
+            servicePrice: service.valor,
+        }));
+        updateServiceList();
+    } catch (error) {
+        console.error('Erro ao obter serviços:', error);
+        alert('Não foi possível carregar a lista de serviços.');
+    }
 }
 
 // Atualizar tabela
@@ -133,12 +172,6 @@ function clearInputs() {
     document.getElementById('barberName').value = '';
     document.getElementById('itemName').value = '';
     document.getElementById('discount').value = '';
-}
-
-function clearServiceInputs() {
-    document.getElementById('serviceName').value = '';
-    document.getElementById('serviceDescription').value = '';
-    document.getElementById('servicePrice').value = '';
 }
 
 // Gerar relatório em PDF
@@ -187,7 +220,6 @@ async function generateIndividualReportAsPDF() {
         totalNet += entry.net;
         yPosition += 10;
 
-        // Adicionar uma nova página se ultrapassar o limite
         if (yPosition > 280) {
             pdf.addPage();
             yPosition = 20;
@@ -202,56 +234,52 @@ async function generateIndividualReportAsPDF() {
     pdf.save(`${selectedBarber}_Relatorio.pdf`);
 }
 
+// Modals
+function setupModals() {
+    const modal = document.getElementById("myModal");
+    const openModalBtn = document.getElementById("openModalBtn");
+    const closeModalBtn = document.querySelector("#myModal .close");
 
-// Seleção do modal e elementos relacionados
-const modal = document.getElementById("myModal");
-const openModalBtn = document.getElementById("openModalBtn");
-const closeModalBtn = document.querySelector("#myModal .close");
+    openModalBtn.onclick = () => {
+        modal.style.display = "flex";
+    };
 
-// Abrir o modal
-openModalBtn.onclick = () => {
-    modal.style.display = "flex"; // Usa "flex" para centralizar
-};
-
-// Fechar o modal ao clicar no "x"
-closeModalBtn.onclick = () => {
-    modal.style.display = "none";
-};
-
-// Fechar o modal ao clicar fora do conteúdo
-window.onclick = (event) => {
-    if (event.target === modal) {
+    closeModalBtn.onclick = () => {
         modal.style.display = "none";
-    }
-};
+    };
 
-// Modal para Relatório Individual
-const individualReportModal = document.getElementById("individualReportModal");
-const openIndividualReportModal = document.getElementById("generateIndividualReportBtn");
-const closeIndividualReportModal = document.getElementById("closeIndividualReportModal");
+    const individualReportModal = document.getElementById("individualReportModal");
+    const openIndividualReportModal = document.getElementById("generateIndividualReportBtn");
+    const closeIndividualReportModal = document.getElementById("closeIndividualReportModal");
 
-// Abrir o modal
-openIndividualReportModal.onclick = () => {
-    individualReportModal.style.display = "flex"; // Usa "flex" para centralizar
-};
+    openIndividualReportModal.onclick = () => {
+        individualReportModal.style.display = "flex";
+    };
 
-// Fechar o modal ao clicar no "x"
-closeIndividualReportModal.onclick = () => {
-    individualReportModal.style.display = "none";
-};
-
-// Fechar o modal ao clicar fora do conteúdo
-window.onclick = (event) => {
-    if (event.target === individualReportModal) {
+    closeIndividualReportModal.onclick = () => {
         individualReportModal.style.display = "none";
-    }
-};
+    };
 
-// Event listeners
-window.onload = () => {
-    updateBarberList();
-    updateBarberReportList();
+    window.onclick = (event) => {
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+        if (event.target === individualReportModal) {
+            individualReportModal.style.display = "none";
+        }
+    };
+}
+
+// Inicialização
+window.onload = async () => {
+    await fetchBarbers();
+    await fetchServices();
     document.getElementById('addRecordBtn').addEventListener('click', addRecord);
-    document.getElementById('addServiceBtn').addEventListener('click', addService);
+    document.getElementById('addServiceBtn').addEventListener('click', () => {
+        const serviceName = document.getElementById('serviceName').value;
+        const servicePrice = parseFloat(document.getElementById('servicePrice').value) || 0;
+        addServiceToServer(null, serviceName, servicePrice);
+    });
     document.getElementById("generateIndividualReportPDFBtn").addEventListener("click", generateIndividualReportAsPDF);
+    setupModals();
 };
