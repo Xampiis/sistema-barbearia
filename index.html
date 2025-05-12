@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comissões Barbearia Benjamin</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <h1>Comissões Barbearia Benjamin</h1>
+
+    <section>
+        <h2>Registrar</h2>
+        <form>
+            <label for="barberName">Nome do Barbeiro:</label>
+            <select id="barberName" required>
+                <option value="">Selecione o Barbeiro</option>
+            </select>
+            
+            <label for="itemName">Serviço/Produto:</label>
+            <select id="itemName" required>
+                <option value="">Selecione o Serviço/Produto</option>
+            </select>
+            
+            <label for="discount">Desconto (Opcional):</label>
+            <input type="number" id="discount" placeholder="R$" step="0.01">
+
+            <button type="button" id="addRecordBtn">Adicionar Registro</button>
+        </form>
+    </section>
+
+    <div class="action-buttons">
+        <button id="openModalBtn">Cadastrar Novo Item</button>
+        <button id="generateIndividualReportBtn">Gerar Relatório Individual</button>
+    </div>
+
+    <section>
+        <h2>Registros</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome do Barbeiro</th>
+                    <th>Serviço/Produto</th>
+                    <th>Valor</th>
+                    <th>Comissão</th>
+                    <th>Desconto</th>
+                    <th>Líquido</th>
+                    <th>Excluir</th>
+                </tr>
+            </thead>
+            <tbody id="dataTableBody"></tbody>
+        </table>
+    </section>
+
+    <!-- Modal para Relatório Individual -->
+    <div id="individualReportModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeIndividualReportModal">&times;</span>
+            <h2>Gerar Relatório Individual</h2>
+            <label for="reportBarber">Selecione o Barbeiro:</label>
+            <select id="reportBarber"></select>
+            <button id="generateIndividualReportPDFBtn">Gerar Relatório</button>
+        </div>
+    </div>
+
+    <!-- Modal para cadastro de novos serviços/produtos -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Cadastrar Serviço/Produto</h2>
+            <form>
+                <label for="serviceName">Nome do Serviço/Produto *:</label>
+                <input type="text" id="serviceName" placeholder="Digite o nome do Serviço ou Produto" required>
+
+                <label for="serviceDescription">Descrição:</label>
+                <input type="text" id="serviceDescription" placeholder="Digite a descrição (Opcional)">
+
+                <label for="servicePrice">Preço *:</label>
+                <input type="number" id="servicePrice" placeholder="Digite o preço" step="0.01" required>
+
+                <button type="button" id="addServiceBtn">Cadastrar Item</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
