@@ -39,7 +39,7 @@ function updateBarberReportList() {
 
 // Obter Lista de Barbeiros do Servidor
 async function fetchBarbers() {
-    try {
+    try { 
         const response = await fetch(`${API_URL}/barbeiros`);
         const barbersFromServer = await response.json();
         barbers = barbersFromServer;
